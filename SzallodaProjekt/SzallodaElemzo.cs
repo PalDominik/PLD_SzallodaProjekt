@@ -216,31 +216,109 @@ namespace SzallodaProjekt
         // 12. Add vissza azoknak a vendégeknek a nevét, akik egynél többször (többszörös foglalás) szerepelnek a rendszerben!
         public List<string> HtöbbszörFoglaloVendegekNeve()
         {
-            throw new NotImplementedException();
+            List<string> list = new List<string>();
+            for (int i = 0; i < this.foglalasok.Count; i++)
+            {
+                int vendegId = this.foglalasok[i].VendegId;
+                int foglalasSzam = this.foglalasok.Count(f => f.VendegId == vendegId);
+                if (foglalasSzam > 1)
+                {
+                    var vendeg = this.vendegek.FirstOrDefault(v => v.VendegId == vendegId);
+                    if (vendeg != null && !list.Contains(vendeg.Nev))
+                    {
+                        list.Add(vendeg.Nev);
+                    }
+                }
+            }
+            return list;
         }
 
         // 13. Számítsd ki a szálloda összbevételét városonként (a vendégek lakóhelye szerint), és adj vissza egy Dictionary<string, int>-et!
         public Dictionary<string, int> BevetelVarosonkent()
         {
-            throw new NotImplementedException();
+            return foglalasok
+                .GroupBy(foglalas =>
+                {
+                    var vendeg = vendegek.FirstOrDefault(v => v.VendegId == foglalas.VendegId);
+                    return vendeg != null ? vendeg.Varos : null;
+                })
+                .Where(group => group.Key != null)
+                .ToDictionary(
+                    group => group.Key,
+                    group => group.Sum(foglalas =>
+                    {
+                        var szoba = szobak.FirstOrDefault(s => s.SzobaId == foglalas.SzobaId);
+                        return szoba != null ? foglalas.EjszakakSzama * szoba.ArPerEjszaka : 0;
+                    })
+                );
+
+
+            //Dictionary<string, int> bevetelVarosonkent = new Dictionary<string, int>();
+            //foglalasok.ForEach(foglalas =>
+            //{
+            //    var vendeg = vendegek.FirstOrDefault(v => v.VendegId == foglalas.VendegId);
+            //    var szoba = szobak.FirstOrDefault(s => s.SzobaId == foglalas.SzobaId);
+            //    if (vendeg != null && szoba != null)
+            //    {
+            //        int koltes = foglalas.EjszakakSzama * szoba.ArPerEjszaka;
+            //        if (bevetelVarosonkent.ContainsKey(vendeg.Varos))
+            //        {
+            //            bevetelVarosonkent[vendeg.Varos] += koltes;
+            //        }
+            //        else
+            //        {
+            //            bevetelVarosonkent[vendeg.Varos] = koltes;
+            //        }
+            //    }
+            //});
+            //return bevetelVarosonkent;
+
         }
 
         // 14. Készíts egy szótárt, amely kategóriánként megadja, hogy az adott kategóriában mi volt a maximális éjszakák száma egyetlen foglalásban!
         public Dictionary<string, int> MaxEjszakakKategoriakSzerint()
         {
-            throw new NotImplementedException();
+            return foglalasok
+                .GroupBy(foglalas =>
+                {
+                    var szoba = szobak.FirstOrDefault(s => s.SzobaId == foglalas.SzobaId);
+                    return szoba != null ? szoba.Kategoria : null;
+                })
+                .Where(group => group.Key != null)
+                .ToDictionary(
+                    group => group.Key,
+                    group => group.Max(foglalas => foglalas.EjszakakSzama)
+                );
         }
 
         // 15. Számítsd ki, hogy a "Deluxe" kategóriájú foglalások hány százalékát teszik ki az összes foglalásnak (double értékként)!
         public double DeluxeFoglalasokSzazaleka()
         {
-            throw new NotImplementedException();
+            return (double)foglalasok.Count(foglalas =>
+            {
+                var szoba = szobak.FirstOrDefault(s => s.SzobaId == foglalas.SzobaId);
+                return szoba != null && szoba.Kategoria == "Deluxe";
+            }) / foglalasok.Count * 100;
         }
 
         // 16. Készíts egy teljes összegző szótárt (Dictionary<string, int>), amely minden vendéghez (név) hozzárendeli az általa összesen kifizetett összeget!
         public Dictionary<string, int> VendegKoltsekSzotar()
         {
-            throw new NotImplementedException();
+            return foglalasok
+                .GroupBy(foglalas =>
+                {
+                    var vendeg = vendegek.FirstOrDefault(v => v.VendegId == foglalas.VendegId);
+                    return vendeg != null ? vendeg.Nev : null;
+                })
+                .Where(group => group.Key != null)
+                .ToDictionary(
+                    group => group.Key,
+                    group => group.Sum(foglalas =>
+                    {
+                        var szoba = szobak.FirstOrDefault(s => s.SzobaId == foglalas.SzobaId);
+                        return szoba != null ? foglalas.EjszakakSzama * szoba.ArPerEjszaka : 0;
+                    })
+                );
         }
     }
 }
